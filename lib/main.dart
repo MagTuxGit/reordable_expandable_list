@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'model.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -23,60 +25,46 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  List<BlockNode> blockNodes = [];
+
+  @override
+  void initState() {
+    super.initState();
+    blockNodes = Data.blockNodes;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final items = Data.items(blockNodes);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reordable Expandable'),
       ),
       body: ReorderableListView.builder(
-        padding: EdgeInsets.only(
-            bottom: BlockMenuOverlay.height(
-                widget.bloc.blockMenuOverlayState()) +
-                48),
-        scrollController: _scrollController,
-        onReorder: _onBlocksReordered,
-        onReorderStart: _onReorderStart,
-        onReorderEnd: _onReorderEnd,
-        //TODO: use proxyDecorator to minimize the child
-        proxyDecorator: (child, index, animation) =>
-            _ReorderableListProxyDecorator(child, index, animation),
-        header: Column(
-          children: [
-            Container(
-              height: 6,
-              margin: const EdgeInsets.only(bottom: 8),
-              color: BrandColors.tileBorderColor(
-                  state.tileStyle.colorType,
-                  state.tileStyle.colorStyle),
-            ),
-          ],
-        ),
-        itemCount: state.items.length,
+        itemCount: items.length,
         itemBuilder: (context, index) {
-          final item = state.items[index];
+          final item = items[index];
           return Container(
-            key: ValueKey(item.blockNode.widgetKey),
-            child: BlockWidget(
-              blockNode: item.blockNode,
-              tileStyle: state.tileStyle,
-              listIndex: index,
-              scrollController: _scrollController,
-              bloc: widget.bloc,
-              isSelectModeOn: state.isSelectModeOn(),
-              hasEditors: state.hasEditors,
-              onOpenInnerLink: widget.onOpenInnerLink,
-              onQuillFocusChanged: _onQuillFocusChanged,
-              onSimpleFocusChanged: _onSimpleFocusChanged,
-              onQuillUpdate: _onQuillUpdate,
-              onTextUpdate: _onTextUpdate,
-              onSplitBlock: widget.bloc.splitBlock,
-              onJoinBlock: widget.bloc.joinBlock,
-              onCheckboxClicked: widget.bloc.checkboxClicked,
-              onClipboardPaste: widget.bloc.onClipboardPaste,
-              onConvertBlock: widget.bloc.blockChangeType,
-            ),
+            key: ValueKey(item.blockNode.id),
+            child: ListTile(title: Text(item.blockNode.value)),
           );
+        },
+        onReorder: (int oldIndex, int newIndex) {
+          setState(() {
+            if (oldIndex < newIndex) {
+              newIndex -= 1;
+            }
+            if (oldIndex == newIndex) return;
+
+            assert(oldIndex > -1 &&
+                oldIndex < blockNodes.length &&
+                newIndex > -1 &&
+                newIndex < blockNodes.length);
+
+            final node = blockNodes.removeAt(oldIndex);
+            blockNodes.insert(newIndex, node);
+          });
         },
       ),
     );
