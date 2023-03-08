@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'drag_and_drop_list/drag_and_drop_item.dart';
+import 'drag_and_drop_list/drag_and_drop_list_expansion.dart';
 import 'drag_and_drop_list/drag_and_drop_lists.dart';
 
 //import 'model.dart';
@@ -51,20 +53,6 @@ class _MyHomePageState extends State<MyHomePage> {
             thickness: 5, color: Colors.blue, indent: 16, endIndent: 16),
         itemGhost: const Divider(
             thickness: 5, color: Colors.blue, indent: 16, endIndent: 16),
-        // listGhost: Padding(
-        //   padding: const EdgeInsets.symmetric(vertical: 16),
-        //   child: Center(
-        //     child: Container(
-        //       padding:
-        //           const EdgeInsets.symmetric(vertical: 16, horizontal: 100.0),
-        //       decoration: BoxDecoration(
-        //         border: Border.all(),
-        //         borderRadius: BorderRadius.circular(7.0),
-        //       ),
-        //       child: const Icon(Icons.add_box),
-        //     ),
-        //   ),
-        // ),
       ),
     );
   }

@@ -1,20 +1,22 @@
+import 'drag_and_drop_item.dart';
+import 'drag_and_drop_item_target.dart';
 import 'drag_and_drop_list_interface.dart';
 import 'drag_and_drop_lists.dart';
 import 'package:flutter/widgets.dart';
 
-typedef void OnPointerMove(PointerMoveEvent event);
-typedef void OnPointerUp(PointerUpEvent event);
-typedef void OnPointerDown(PointerDownEvent event);
-typedef void OnItemReordered(
+typedef OnPointerMove = void Function(PointerMoveEvent event);
+typedef OnPointerUp = void Function(PointerUpEvent event);
+typedef OnPointerDown = void Function(PointerDownEvent event);
+typedef OnItemReordered = void Function(
   DragAndDropItem reorderedItem,
   DragAndDropItem receiverItem,
 );
-typedef void OnItemDropOnLastTarget(
+typedef OnItemDropOnLastTarget = void Function(
   DragAndDropItem newOrReorderedItem,
   DragAndDropListInterface parentList,
   DragAndDropItemTarget receiver,
 );
-typedef void OnListReordered(
+typedef OnListReordered = void Function(
   DragAndDropListInterface reorderedList,
   DragAndDropListInterface receiverList,
 );
@@ -52,8 +54,6 @@ class DragAndDropBuilderParameters {
   final double listWidth;
   final double lastItemTargetHeight;
   final bool addLastItemTargetHeightToTop;
-  final DragHandle? listDragHandle;
-  final DragHandle? itemDragHandle;
   final bool constrainDraggingAxis;
   final bool disableScrolling;
 
@@ -90,8 +90,6 @@ class DragAndDropBuilderParameters {
     this.listWidth = double.infinity,
     this.lastItemTargetHeight = 20,
     this.addLastItemTargetHeightToTop = false,
-    this.listDragHandle,
-    this.itemDragHandle,
     this.constrainDraggingAxis = true,
     this.disableScrolling = false,
   });

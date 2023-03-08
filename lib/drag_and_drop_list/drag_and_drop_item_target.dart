@@ -1,5 +1,6 @@
+import 'drag_and_drop_builder_parameters.dart';
+import 'drag_and_drop_item.dart';
 import 'drag_and_drop_list_interface.dart';
-import 'drag_and_drop_lists.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
@@ -9,7 +10,7 @@ class DragAndDropItemTarget extends StatefulWidget {
   final DragAndDropBuilderParameters parameters;
   final OnItemDropOnLastTarget onReorderOrAdd;
 
-  DragAndDropItemTarget(
+  const DragAndDropItemTarget(
       {required this.child,
       required this.onReorderOrAdd,
       required this.parameters,
@@ -55,9 +56,10 @@ class _DragAndDropItemTarget extends State<DragAndDropItemTarget>
             },
             onWillAccept: (incoming) {
               bool accept = true;
-              if (widget.parameters.itemTargetOnWillAccept != null)
+              if (widget.parameters.itemTargetOnWillAccept != null) {
                 accept =
                     widget.parameters.itemTargetOnWillAccept!(incoming, widget);
+              }
               if (accept && mounted) {
                 setState(() {
                   _hoveredDraggable = incoming;
