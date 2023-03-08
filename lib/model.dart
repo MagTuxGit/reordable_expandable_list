@@ -25,13 +25,15 @@ class Data {
       }
       final item = EditorItem(blockNode, currentItem, []);
 
+      items.add(item);
+
       if (currentItem == null) {
-        items.add(item);
-        if (blockNode.isToggleList) {
-          currentItem = item;
-        }
+        //items.add(item);
       } else {
         currentItem.add(item);
+      }
+      if (blockNode.isToggleList) {
+        currentItem = item;
       }
     }
 
@@ -47,6 +49,8 @@ class EditorItem {
   EditorItem(this.blockNode, this.parent, this.children);
 
   int get level => blockNode.listLevel;
+
+  bool get isToggle => blockNode.isToggleList;
 
   void add(EditorItem child) {
     children.add(child);
