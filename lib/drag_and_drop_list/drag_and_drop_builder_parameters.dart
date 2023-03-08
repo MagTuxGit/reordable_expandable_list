@@ -34,7 +34,6 @@ class DragAndDropBuilderParameters {
   final ItemOnWillAccept? itemOnWillAccept;
   final ItemTargetOnWillAccept? itemTargetOnWillAccept;
   final OnItemDraggingChanged? onItemDraggingChanged;
-  final Axis axis;
   final CrossAxisAlignment verticalAlignment;
   final double? listDraggingWidth;
   final bool dragOnLongPress;
@@ -54,7 +53,6 @@ class DragAndDropBuilderParameters {
   final double listWidth;
   final double lastItemTargetHeight;
   final bool addLastItemTargetHeightToTop;
-  final bool constrainDraggingAxis;
   final bool disableScrolling;
 
   DragAndDropBuilderParameters({
@@ -72,7 +70,6 @@ class DragAndDropBuilderParameters {
     this.itemTargetOnWillAccept,
     this.onItemDraggingChanged,
     this.dragOnLongPress = true,
-    this.axis = Axis.vertical,
     this.verticalAlignment = CrossAxisAlignment.start,
     this.itemSizeAnimationDuration = 150,
     this.itemGhostOpacity = 0.3,
@@ -90,7 +87,6 @@ class DragAndDropBuilderParameters {
     this.listWidth = double.infinity,
     this.lastItemTargetHeight = 20,
     this.addLastItemTargetHeightToTop = false,
-    this.constrainDraggingAxis = true,
     this.disableScrolling = false,
   });
 }

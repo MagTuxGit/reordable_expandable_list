@@ -21,7 +21,8 @@ typedef OnItemAdd = void Function(
   int listIndex,
   int newItemIndex,
 );
-typedef OnListAdd = void Function(DragAndDropListInterface newList, int newListIndex);
+typedef OnListAdd = void Function(
+    DragAndDropListInterface newList, int newListIndex);
 typedef OnListReorder = void Function(int oldListIndex, int newListIndex);
 typedef OnListDraggingChanged = void Function(
   DragAndDropListInterface? list,
@@ -221,13 +222,6 @@ class DragAndDropLists extends StatefulWidget {
   /// The default horizontal alignment of list contents.
   final MainAxisAlignment horizontalAlignment;
 
-  /// Determines whether the DragAndDropLists are displayed in a horizontal or
-  /// vertical manner.
-  /// Set [axis] to Axis.vertical for vertical arrangement of the lists.
-  /// Set [axis] to Axis.horizontal for horizontal arrangement of the lists.
-  /// If [axis] is set to Axis.horizontal, [listWidth] must be set to some finite number.
-  final Axis axis;
-
   /// Whether or not to return a widget or a sliver-compatible list.
   /// Set to true if using as a sliver. If true, a [scrollController] must be provided.
   /// Set to false if using in a widget only.
@@ -242,11 +236,6 @@ class DragAndDropLists extends StatefulWidget {
   /// parent CustomScrollView to set physics to NeverScrollableScrollPhysics()
   final bool disableScrolling;
 
-  /// Constrain the dragging axis in a vertical list to only allow dragging on
-  /// the vertical axis. By default this is set to true. This may be useful to
-  /// disable when setting customDragTargets
-  final bool constrainDraggingAxis;
-  
   /// If you put a widget before DragAndDropLists there's an unexpected padding
   /// before the list renders. This is the default behaviour for ListView which
   /// is used internally. To remove the padding, set this field to true
@@ -295,32 +284,20 @@ class DragAndDropLists extends StatefulWidget {
     this.lastListTargetSize = 110,
     this.verticalAlignment = CrossAxisAlignment.start,
     this.horizontalAlignment = MainAxisAlignment.start,
-    this.axis = Axis.vertical,
     this.sliverList = false,
     this.scrollController,
     this.disableScrolling = false,
-    this.constrainDraggingAxis = true,
     this.removeTopPadding = false,
     Key? key,
   }) : super(key: key) {
     if (listGhost == null &&
-        children
-            .whereType<DragAndDropListExpansionInterface>()
-            .isNotEmpty) {
+        children.whereType<DragAndDropListInterface>().isNotEmpty) {
       throw Exception(
           'If using DragAndDropListExpansion, you must provide a non-null listGhost');
     }
     if (sliverList && scrollController == null) {
       throw Exception(
           'A scroll controller must be provided when using sliver lists');
-    }
-    if (axis == Axis.horizontal && listWidth == double.infinity) {
-      throw Exception(
-          'A finite width must be provided when setting the axis to horizontal');
-    }
-    if (axis == Axis.horizontal && sliverList) {
-      throw Exception(
-          'Combining a sliver list with a horizontal list is currently unsupported');
     }
   }
 
@@ -374,7 +351,6 @@ class DragAndDropListsState extends State<DragAndDropLists> {
       itemDivider: widget.itemDivider,
       itemDecorationWhileDragging: widget.itemDecorationWhileDragging,
       verticalAlignment: widget.verticalAlignment,
-      axis: widget.axis,
       itemGhost: widget.itemGhost,
       listDecoration: widget.listDecoration,
       listDecorationWhileDragging: widget.listDecorationWhileDragging,
@@ -382,7 +358,6 @@ class DragAndDropListsState extends State<DragAndDropLists> {
       listWidth: widget.listWidth,
       lastItemTargetHeight: widget.lastItemTargetHeight,
       addLastItemTargetHeightToTop: widget.addLastItemTargetHeightToTop,
-      constrainDraggingAxis: widget.constrainDraggingAxis,
       disableScrolling: widget.disableScrolling,
     );
 
@@ -396,18 +371,16 @@ class DragAndDropListsState extends State<DragAndDropLists> {
     if (widget.children.isNotEmpty) {
       Widget outerListHolder;
 
-      if (widget.sliverList) {
-        outerListHolder = _buildSliverList(dragAndDropListTarget, parameters);
-      } else if (widget.disableScrolling) {
-        outerListHolder =
-            _buildUnscrollableList(dragAndDropListTarget, parameters);
-      } else {
+      // if (widget.sliverList) {
+      //   outerListHolder = _buildSliverList(dragAndDropListTarget, parameters);
+      // } else if (widget.disableScrolling) {
+      //   outerListHolder =
+      //       _buildUnscrollableList(dragAndDropListTarget, parameters);
+      // } else {
         outerListHolder = _buildListView(parameters, dragAndDropListTarget);
-      }
+      // }
 
-      if (widget.children
-          .whereType<DragAndDropListExpansionInterface>()
-          .isNotEmpty) {
+      if (widget.children.whereType<DragAndDropListInterface>().isNotEmpty) {
         outerListHolder = PageStorage(
           bucket: _pageStorageBucket,
           child: outerListHolder,
@@ -427,39 +400,32 @@ class DragAndDropListsState extends State<DragAndDropLists> {
     }
   }
 
-  SliverList _buildSliverList(DragAndDropListTarget dragAndDropListTarget,
-      DragAndDropBuilderParameters parameters) {
-    bool includeSeparators = widget.listDivider != null;
-    int childrenCount = _calculateChildrenCount(includeSeparators);
+  // SliverList _buildSliverList(DragAndDropListTarget dragAndDropListTarget,
+  //     DragAndDropBuilderParameters parameters) {
+  //   bool includeSeparators = widget.listDivider != null;
+  //   int childrenCount = _calculateChildrenCount(includeSeparators);
+  //
+  //   return SliverList(
+  //     delegate: SliverChildBuilderDelegate(
+  //       (context, index) {
+  //         return _buildInnerList(index, childrenCount, dragAndDropListTarget,
+  //             includeSeparators, parameters);
+  //       },
+  //       childCount: childrenCount,
+  //     ),
+  //   );
+  // }
 
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          return _buildInnerList(index, childrenCount, dragAndDropListTarget,
-              includeSeparators, parameters);
-        },
-        childCount: childrenCount,
-      ),
-    );
-  }
-
-  Widget _buildUnscrollableList(DragAndDropListTarget dragAndDropListTarget,
-      DragAndDropBuilderParameters parameters) {
-    if (widget.axis == Axis.vertical) {
-      return Column(
-        children: _buildOuterList(dragAndDropListTarget, parameters),
-      );
-    } else {
-      return Row(
-        children: _buildOuterList(dragAndDropListTarget, parameters),
-      );
-    }
-  }
+  // Widget _buildUnscrollableList(DragAndDropListTarget dragAndDropListTarget,
+  //     DragAndDropBuilderParameters parameters) {
+  //   return Column(
+  //     children: _buildOuterList(dragAndDropListTarget, parameters),
+  //   );
+  // }
 
   Widget _buildListView(DragAndDropBuilderParameters parameters,
       DragAndDropListTarget dragAndDropListTarget) {
     Widget listView = ListView(
-      scrollDirection: widget.axis,
       controller: _scrollController,
       children: _buildOuterList(dragAndDropListTarget, parameters),
     );
@@ -664,7 +630,6 @@ class DragAndDropListsState extends State<DragAndDropLists> {
 
   final int _duration = 30; // in ms
   final int _scrollAreaSize = 20;
-  final double _overDragMin = 5.0;
   final double _overDragMax = 20.0;
   final double _overDragCoefficient = 3.3;
 
@@ -687,18 +652,7 @@ class DragAndDropListsState extends State<DragAndDropLists> {
       var topLeftOffset = localToGlobal(rb, Offset.zero);
       var bottomRightOffset = localToGlobal(rb, size.bottomRight(Offset.zero));
 
-      if (widget.axis == Axis.vertical) {
-        newOffset = _scrollListVertical(topLeftOffset, bottomRightOffset);
-      } else {
-        var directionality = Directionality.of(context);
-        if (directionality == TextDirection.ltr) {
-          newOffset =
-              _scrollListHorizontalLtr(topLeftOffset, bottomRightOffset);
-        } else {
-          newOffset =
-              _scrollListHorizontalRtl(topLeftOffset, bottomRightOffset);
-        }
-      }
+      newOffset = _scrollListVertical(topLeftOffset, bottomRightOffset);
 
       if (newOffset != null) {
         _scrolling = true;
@@ -732,72 +686,6 @@ class DragAndDropListsState extends State<DragAndDropLists> {
             pointerYPosition - (bottom - _scrollAreaSize), _overDragMax);
         newOffset = min(scrollController.position.maxScrollExtent,
             scrollController.position.pixels + overDrag / _overDragCoefficient);
-      }
-    }
-
-    return newOffset;
-  }
-
-  double? _scrollListHorizontalLtr(
-      Offset topLeftOffset, Offset bottomRightOffset) {
-    double left = topLeftOffset.dx;
-    double right = bottomRightOffset.dx;
-    double? newOffset;
-
-    var pointerXPosition = _pointerXPosition;
-    var scrollController = _scrollController;
-    if (scrollController != null && pointerXPosition != null) {
-      if (pointerXPosition < (left + _scrollAreaSize) &&
-          scrollController.position.pixels >
-              scrollController.position.minScrollExtent) {
-        // scrolling toward minScrollExtent
-        final overDrag = min(
-            (left + _scrollAreaSize) - pointerXPosition + _overDragMin,
-            _overDragMax);
-        newOffset = max(scrollController.position.minScrollExtent,
-            scrollController.position.pixels - overDrag / _overDragCoefficient);
-      } else if (pointerXPosition > (right - _scrollAreaSize) &&
-          scrollController.position.pixels <
-              scrollController.position.maxScrollExtent) {
-        // scrolling toward maxScrollExtent
-        final overDrag = min(
-            pointerXPosition - (right - _scrollAreaSize) + _overDragMin,
-            _overDragMax);
-        newOffset = min(scrollController.position.maxScrollExtent,
-            scrollController.position.pixels + overDrag / _overDragCoefficient);
-      }
-    }
-
-    return newOffset;
-  }
-
-  double? _scrollListHorizontalRtl(
-      Offset topLeftOffset, Offset bottomRightOffset) {
-    double left = topLeftOffset.dx;
-    double right = bottomRightOffset.dx;
-    double? newOffset;
-
-    var pointerXPosition = _pointerXPosition;
-    var scrollController = _scrollController;
-    if (scrollController != null && pointerXPosition != null) {
-      if (pointerXPosition < (left + _scrollAreaSize) &&
-          scrollController.position.pixels <
-              scrollController.position.maxScrollExtent) {
-        // scrolling toward maxScrollExtent
-        final overDrag = min(
-            (left + _scrollAreaSize) - pointerXPosition + _overDragMin,
-            _overDragMax);
-        newOffset = min(scrollController.position.maxScrollExtent,
-            scrollController.position.pixels + overDrag / _overDragCoefficient);
-      } else if (pointerXPosition > (right - _scrollAreaSize) &&
-          scrollController.position.pixels >
-              scrollController.position.minScrollExtent) {
-        // scrolling toward minScrollExtent
-        final overDrag = min(
-            pointerXPosition - (right - _scrollAreaSize) + _overDragMin,
-            _overDragMax);
-        newOffset = max(scrollController.position.minScrollExtent,
-            scrollController.position.pixels - overDrag / _overDragCoefficient);
       }
     }
 

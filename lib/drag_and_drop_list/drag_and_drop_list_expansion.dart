@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 typedef OnExpansionChanged = void Function(bool expanded);
 
 /// This class mirrors flutter's [ExpansionTile], with similar options.
-class DragAndDropListExpansion implements DragAndDropListExpansionInterface {
+class DragAndDropListExpansion implements DragAndDropListInterface {
   final Widget? title;
   final Widget? subtitle;
   final Widget? trailing;
@@ -30,14 +30,10 @@ class DragAndDropListExpansion implements DragAndDropListExpansionInterface {
   final Widget? contentsWhenEmpty;
   final Widget? lastTarget;
 
-  /// Whether or not this item can be dragged.
-  /// Set to true if it can be reordered.
-  /// Set to false if it must remain fixed.
-  @override
-  final bool canDrag;
-
   /// Disable to borders displayed at the top and bottom when expanded
   final bool disableTopAndBottomBorders;
+
+  final EdgeInsets? contentPadding;
 
   final ValueNotifier<bool> _expanded = ValueNotifier<bool>(true);
   final GlobalKey<ProgrammaticExpansionTileState> _expansionKey =
@@ -55,8 +51,8 @@ class DragAndDropListExpansion implements DragAndDropListExpansionInterface {
     this.contentsWhenEmpty,
     this.lastTarget,
     required this.listKey,
-    this.canDrag = true,
     this.disableTopAndBottomBorders = false,
+    this.contentPadding,
   }) {
     _expanded.value = initiallyExpanded;
   }
@@ -76,6 +72,7 @@ class DragAndDropListExpansion implements DragAndDropListExpansionInterface {
       initiallyExpanded: initiallyExpanded,
       onExpansionChanged: _onSetExpansion,
       key: _expansionKey,
+      contentPadding: contentPadding,
       children: contents,
     );
 

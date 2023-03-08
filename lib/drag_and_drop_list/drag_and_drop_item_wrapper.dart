@@ -28,10 +28,7 @@ class _DragAndDropItemWrapper extends State<DragAndDropItemWrapper>
       onSizeChange: _setContainerSize,
       child: LongPressDraggable<DragAndDropItem>(
         data: widget.child,
-        axis: widget.parameters!.axis == Axis.vertical &&
-                widget.parameters!.constrainDraggingAxis
-            ? Axis.vertical
-            : null,
+        axis: Axis.vertical,
         feedback: SizedBox(
           width: widget.parameters!.itemDraggingWidth ?? _containerSize.width,
           child: Material(

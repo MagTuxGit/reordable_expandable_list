@@ -39,6 +39,7 @@ class ProgrammaticExpansionTile extends StatefulWidget {
     this.trailing,
     this.initiallyExpanded = false,
     this.disableTopAndBottomBorders = false,
+    this.contentPadding,
   }) : super(key: key);
 
   final Key listKey;
@@ -86,6 +87,8 @@ class ProgrammaticExpansionTile extends StatefulWidget {
 
   /// Disable to borders displayed at the top and bottom when expanded
   final bool disableTopAndBottomBorders;
+
+  final EdgeInsets? contentPadding;
 
   @override
   ProgrammaticExpansionTileState createState() =>
@@ -215,6 +218,9 @@ class ProgrammaticExpansionTileState extends State<ProgrammaticExpansionTile>
                     turns: _iconTurns,
                     child: const Icon(Icons.expand_more),
                   ),
+              minLeadingWidth: 0,
+              horizontalTitleGap: 0,
+              contentPadding: widget.contentPadding,
             ),
           ),
           ClipRect(

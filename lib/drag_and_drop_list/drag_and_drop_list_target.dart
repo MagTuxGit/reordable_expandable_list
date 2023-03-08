@@ -37,9 +37,7 @@ class _DragAndDropListTarget extends State<DragAndDropListTarget>
         AnimatedSize(
           duration: Duration(
               milliseconds: widget.parameters.listSizeAnimationDuration),
-          alignment: widget.parameters.axis == Axis.vertical
-              ? Alignment.bottomCenter
-              : Alignment.centerLeft,
+          alignment: Alignment.bottomCenter,
           child: _hoveredDraggable != null
               ? Opacity(
                   opacity: widget.parameters.listGhostOpacity,
@@ -48,15 +46,7 @@ class _DragAndDropListTarget extends State<DragAndDropListTarget>
                 )
               : Container(),
         ),
-        widget.child ??
-            SizedBox(
-              height: widget.parameters.axis == Axis.vertical
-                  ? widget.lastListTargetSize
-                  : null,
-              width: widget.parameters.axis == Axis.horizontal
-                  ? widget.lastListTargetSize
-                  : null,
-            ),
+        widget.child ?? SizedBox(height: widget.lastListTargetSize),
       ],
     );
 
@@ -65,10 +55,6 @@ class _DragAndDropListTarget extends State<DragAndDropListTarget>
         padding: widget.parameters.listPadding!,
         child: visibleContents,
       );
-    }
-
-    if (widget.parameters.axis == Axis.horizontal) {
-      visibleContents = SingleChildScrollView(child: visibleContents);
     }
 
     return Stack(

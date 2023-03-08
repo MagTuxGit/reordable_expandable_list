@@ -29,7 +29,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     //blockNodes = Data.blockNodes;
 
-    _lists = List.generate(5, (outerIndex) {
+    _lists = List.generate(3, (outerIndex) {
       return InnerList(
         name: outerIndex.toString(),
         children: List.generate(5, (innerIndex) => '$outerIndex.$innerIndex'),
@@ -61,11 +61,14 @@ class _MyHomePageState extends State<MyHomePage> {
     var innerList = _lists[outerIndex];
     return DragAndDropListExpansion(
       title: Text('List ${innerList.name}'),
-      //subtitle: Text('Subtitle ${innerList.name}'),
-      //leading: const Icon(Icons.ac_unit),
+      disableTopAndBottomBorders: true,
+      leading: const Icon(Icons.expand_more),
+      trailing: const SizedBox.shrink(),
       children: List.generate(innerList.children.length,
           (index) => _buildItem(innerList.children[index])),
       listKey: ObjectKey(innerList),
+      //contentPadding: EdgeInsets.only(left: (item.level + 1) * 24, right: 16),
+      contentPadding: const EdgeInsets.only(left: 24, right: 16),
     );
   }
 

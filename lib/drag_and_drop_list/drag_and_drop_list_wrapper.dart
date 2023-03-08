@@ -30,11 +30,10 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
     Widget dragAndDropListContents =
         widget.dragAndDropList.generateWidget(widget.parameters);
 
-    Widget draggable  = LongPressDraggable<DragAndDropListInterface>(
+    Widget draggable = LongPressDraggable<DragAndDropListInterface>(
       data: widget.dragAndDropList,
-      axis: draggableAxis(),
-      feedback:
-      buildFeedbackWithoutHandle(context, dragAndDropListContents),
+      axis: Axis.vertical,
+      feedback: buildFeedbackWithoutHandle(context, dragAndDropListContents),
       childWhenDragging: Container(),
       onDragStarted: () => _setDragging(true),
       onDragCompleted: () => _setDragging(false),
@@ -43,47 +42,34 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
       child: dragAndDropListContents,
     );
 
-    var rowOrColumnChildren = <Widget>[
-      AnimatedSize(
-        duration:
-            Duration(milliseconds: widget.parameters.listSizeAnimationDuration),
-        alignment: widget.parameters.axis == Axis.vertical
-            ? Alignment.bottomCenter
-            : Alignment.centerLeft,
-        child: _hoveredDraggable != null
-            ? Opacity(
-                opacity: widget.parameters.listGhostOpacity,
-                child: widget.parameters.listGhost ??
-                    Container(
-                      padding: widget.parameters.axis == Axis.vertical
-                          ? const EdgeInsets.all(0)
-                          : EdgeInsets.symmetric(
-                              horizontal:
-                                  widget.parameters.listPadding!.horizontal),
-                      child:
-                          _hoveredDraggable!.generateWidget(widget.parameters),
-                    ),
-              )
-            : Container(),
-      ),
-      Listener(
-        onPointerMove: _onPointerMove,
-        onPointerDown: widget.parameters.onPointerDown,
-        onPointerUp: widget.parameters.onPointerUp,
-        child: draggable,
-      ),
-    ];
-
-    var stack = Stack(
+    final stack = Stack(
       children: <Widget>[
-        widget.parameters.axis == Axis.vertical
-            ? Column(
-                children: rowOrColumnChildren,
-              )
-            : Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: rowOrColumnChildren,
-              ),
+        Column(
+          children: [
+            AnimatedSize(
+              duration: Duration(
+                  milliseconds: widget.parameters.listSizeAnimationDuration),
+              alignment: Alignment.bottomCenter,
+              child: _hoveredDraggable != null
+                  ? Opacity(
+                      opacity: widget.parameters.listGhostOpacity,
+                      child: widget.parameters.listGhost ??
+                          Container(
+                            padding: const EdgeInsets.all(0),
+                            child: _hoveredDraggable!
+                                .generateWidget(widget.parameters),
+                          ),
+                    )
+                  : Container(),
+            ),
+            Listener(
+              onPointerMove: _onPointerMove,
+              onPointerDown: widget.parameters.onPointerDown,
+              onPointerUp: widget.parameters.onPointerUp,
+              child: draggable,
+            ),
+          ],
+        ),
         Positioned.fill(
           child: DragTarget<DragAndDropListInterface>(
             builder: (context, candidateData, rejectedData) {
@@ -133,14 +119,6 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
         child: stack,
       );
     }
-    if (widget.parameters.axis == Axis.horizontal &&
-        !widget.parameters.disableScrolling) {
-      toReturn = SingleChildScrollView(
-        child: Container(
-          child: toReturn,
-        ),
-      );
-    }
 
     return toReturn;
   }
@@ -148,11 +126,8 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
   Widget buildFeedbackWithoutHandle(
       BuildContext context, Widget dragAndDropListContents) {
     return SizedBox(
-      width: widget.parameters.axis == Axis.vertical
-          ? (widget.parameters.listDraggingWidth ??
-              MediaQuery.of(context).size.width)
-          : (widget.parameters.listDraggingWidth ??
-              widget.parameters.listWidth),
+      width: widget.parameters.listDraggingWidth ??
+          MediaQuery.of(context).size.width,
       child: Material(
         color: Colors.transparent,
         child: Container(
@@ -164,13 +139,6 @@ class _DragAndDropListWrapper extends State<DragAndDropListWrapper>
         ),
       ),
     );
-  }
-
-  Axis? draggableAxis() {
-    return widget.parameters.axis == Axis.vertical &&
-            widget.parameters.constrainDraggingAxis
-        ? Axis.vertical
-        : null;
   }
 
   void _setDragging(bool dragging) {
