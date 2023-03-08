@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'model.dart';
+import 'drag_and_drop_list/drag_and_drop_lists.dart';
+
+//import 'model.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -9,85 +11,92 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+class InnerList {
+  final String name;
+  List<String> children;
+
+  InnerList({required this.name, required this.children});
+}
+
 class _MyHomePageState extends State<MyHomePage> {
-  List<BlockNode> blockNodes = [];
+  //List<BlockNode> blockNodes = [];
+  late List<InnerList> _lists;
 
   @override
   void initState() {
     super.initState();
-    blockNodes = Data.blockNodes;
+    //blockNodes = Data.blockNodes;
+
+    _lists = List.generate(5, (outerIndex) {
+      return InnerList(
+        name: outerIndex.toString(),
+        children: List.generate(5, (innerIndex) => '$outerIndex.$innerIndex'),
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final items = Data.items(blockNodes);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reordable Expandable'),
       ),
-      body: _ReordableListBranch(items, onReorder),
+      //body: _ReordableListBranch(items, onReorder),
+      body: DragAndDropLists(
+        children: List.generate(_lists.length, (index) => _buildList(index)),
+        onItemReorder: _onItemReorder,
+        onListReorder: _onListReorder,
+        // listGhost is mandatory when using expansion tiles to prevent multiple widgets using the same globalkey
+        listGhost: const Divider(
+            thickness: 5, color: Colors.blue, indent: 16, endIndent: 16),
+        itemGhost: const Divider(
+            thickness: 5, color: Colors.blue, indent: 16, endIndent: 16),
+        // listGhost: Padding(
+        //   padding: const EdgeInsets.symmetric(vertical: 16),
+        //   child: Center(
+        //     child: Container(
+        //       padding:
+        //           const EdgeInsets.symmetric(vertical: 16, horizontal: 100.0),
+        //       decoration: BoxDecoration(
+        //         border: Border.all(),
+        //         borderRadius: BorderRadius.circular(7.0),
+        //       ),
+        //       child: const Icon(Icons.add_box),
+        //     ),
+        //   ),
+        // ),
+      ),
     );
   }
 
-  void onReorder(int oldIndex, int newIndex) {
+  _buildList(int outerIndex) {
+    var innerList = _lists[outerIndex];
+    return DragAndDropListExpansion(
+      title: Text('List ${innerList.name}'),
+      //subtitle: Text('Subtitle ${innerList.name}'),
+      //leading: const Icon(Icons.ac_unit),
+      children: List.generate(innerList.children.length,
+          (index) => _buildItem(innerList.children[index])),
+      listKey: ObjectKey(innerList),
+    );
+  }
+
+  _buildItem(String item) {
+    return DragAndDropItem(child: ListTile(title: Text(item)));
+  }
+
+  _onItemReorder(
+      int oldItemIndex, int oldListIndex, int newItemIndex, int newListIndex) {
     setState(() {
-      if (oldIndex < newIndex) {
-        newIndex -= 1;
-      }
-      if (oldIndex == newIndex) return;
+      var movedItem = _lists[oldListIndex].children.removeAt(oldItemIndex);
+      _lists[newListIndex].children.insert(newItemIndex, movedItem);
+    });
+  }
 
-      assert(oldIndex > -1 &&
-          oldIndex < blockNodes.length &&
-          newIndex > -1 &&
-          newIndex < blockNodes.length);
-
-      final node = blockNodes.removeAt(oldIndex);
-      blockNodes.insert(newIndex, node);
+  _onListReorder(int oldListIndex, int newListIndex) {
+    setState(() {
+      var movedList = _lists.removeAt(oldListIndex);
+      _lists.insert(newListIndex, movedList);
     });
   }
 }
-
-class _ReordableListBranch extends StatelessWidget {
-  final List<EditorItem> items;
-  final ReorderCallback onReorder;
-
-  const _ReordableListBranch(this.items, this.onReorder);
-
-  @override
-  Widget build(BuildContext context) {
-    return ReorderableListView.builder(
-      itemCount: items.length,
-      shrinkWrap: true,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return Container(
-          key: ValueKey(item.blockNode.id),
-          child: ListTile(
-            title: Text(item.blockNode.value),
-            leading: item.isToggle
-                ? const Icon(Icons.expand_more)
-                : null,
-            minLeadingWidth: 0,
-            horizontalTitleGap: 0,
-            contentPadding:
-                EdgeInsets.only(left: (item.level + 1) * 24, right: 16),
-          ),
-        );
-      },
-      onReorder: onReorder,
-    );
-  }
-}
-
-//_ReordableListBranch([item, ...item.children], onReorder)
-
-//item.children.map((child) =>ListTile(title: Text(child.blockNode.value))).toList()
-
-// item.isToggle
-// ? ExpansionTile(
-// title: Text(item.blockNode.value),
-// tilePadding:
-// EdgeInsets.only(left: (item.level + 1) * 16, right: 16),
-// children: [_ReordableListBranch(item.children, onReorder)])
-// :
