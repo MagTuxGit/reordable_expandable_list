@@ -380,12 +380,12 @@ class DragAndDropListsState extends State<DragAndDropLists> {
         outerListHolder = _buildListView(parameters, dragAndDropListTarget);
       // }
 
-      if (widget.children.whereType<DragAndDropListInterface>().isNotEmpty) {
-        outerListHolder = PageStorage(
-          bucket: _pageStorageBucket,
-          child: outerListHolder,
-        );
-      }
+      // if (widget.children.whereType<DragAndDropListInterface>().isNotEmpty) {
+      //   outerListHolder = PageStorage(
+      //     bucket: _pageStorageBucket,
+      //     child: outerListHolder,
+      //   );
+      // }
       return outerListHolder;
     } else {
       return Center(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'drag_and_drop_list/drag_and_drop_item.dart';
 import 'drag_and_drop_list/drag_and_drop_list_expansion.dart';
+import 'drag_and_drop_list/drag_and_drop_list_interface.dart';
 import 'drag_and_drop_list/drag_and_drop_lists.dart';
 
 //import 'model.dart';
@@ -29,10 +30,10 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     //blockNodes = Data.blockNodes;
 
-    _lists = List.generate(3, (outerIndex) {
+    _lists = List.generate(4, (outerIndex) {
       return InnerList(
         name: outerIndex.toString(),
-        children: List.generate(5, (innerIndex) => '$outerIndex.$innerIndex'),
+        children: List.generate(2, (innerIndex) => '$outerIndex.$innerIndex'),
       );
     });
   }
@@ -53,11 +54,12 @@ class _MyHomePageState extends State<MyHomePage> {
             thickness: 5, color: Colors.blue, indent: 16, endIndent: 16),
         itemGhost: const Divider(
             thickness: 5, color: Colors.blue, indent: 16, endIndent: 16),
+          listTarget: Container(height: 44, ),
       ),
     );
   }
 
-  _buildList(int outerIndex) {
+  DragAndDropListInterface _buildList(int outerIndex) {
     var innerList = _lists[outerIndex];
     return DragAndDropListExpansion(
       title: Text('List ${innerList.name}'),
@@ -72,11 +74,10 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  _buildItem(String item) {
-    return DragAndDropItem(child: ListTile(title: Text(item)));
-  }
+  DragAndDropItem _buildItem(String item) =>
+      DragAndDropItem(child: ListTile(title: Text(item)));
 
-  _onItemReorder(
+  void _onItemReorder(
       int oldItemIndex, int oldListIndex, int newItemIndex, int newListIndex) {
     setState(() {
       var movedItem = _lists[oldListIndex].children.removeAt(oldItemIndex);
@@ -84,7 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  _onListReorder(int oldListIndex, int newListIndex) {
+  void _onListReorder(int oldListIndex, int newListIndex) {
     setState(() {
       var movedList = _lists.removeAt(oldListIndex);
       _lists.insert(newListIndex, movedList);
