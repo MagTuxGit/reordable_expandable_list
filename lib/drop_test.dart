@@ -11,9 +11,9 @@ class TestDND extends StatefulWidget {
 }
 
 class _TestDNDState extends State<TestDND> {
-  List<String> blocks = List.generate(20, (index) => 'Block $index');
+  List<String> blocks = List.generate(10, (index) => 'Block $index');
 
-  final _listViewKey = GlobalKey();
+  final _listViewKey = GlobalKey<AnimatedListState>();
   final ScrollController _scrollController = ScrollController();
   bool _isDragging = false;
 
@@ -25,53 +25,76 @@ class _TestDNDState extends State<TestDND> {
 
   @override
   Widget build(BuildContext context) {
-    final blocksList = CustomScrollView(
-      key: _listViewKey,
-      controller: _scrollController,
-      slivers: [
-        SliverToBoxAdapter(
-            child: SizedBox(
-                height: 44,
-                child: DragTarget<String>(
-                  builder:
-                      (context, List<String?> candidateData, rejectedData) {
-                    if (candidateData.isNotEmpty) {
-                      return const Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Divider(thickness: 2, color: Colors.blue));
-                    }
-                    return const SizedBox.shrink();
-                  },
-                  onWillAccept: (data) {
-                    return true;
-                  },
-                  onAccept: (data) {
-                    setState(() {
-                      final indexFrom = blocks.indexOf(data);
-                      blocks.removeAt(indexFrom);
+    final blocksList = DragTarget<String>(onWillAccept: (data) {
+      return true;
+    }, onAccept: (data) {
+      setState(() {
+        final indexFrom = blocks.indexOf(data);
+        blocks.removeAt(indexFrom);
 
-                      blocks.insert(0, data);
-                    });
-                  },
-                ))),
-        ...blocks.mapIndexed((index, block) {
+        final indexTo = blocks.length;
+        blocks.insert(indexTo, data);
+      });
+    }, builder: (context, List<String?> footerCandidateData, rejectedData) {
+      return AnimatedList(
+        key: _listViewKey,
+        controller: _scrollController,
+        initialItemCount: blocks.length + 1,
+        itemBuilder: (context, index, animation) {
+          if (index == blocks.length) {
+            return DragTarget<String>(
+              builder: (context, List<String?> candidateData, rejectedData) {
+                return SizedBox(
+                    height: 64,
+                    child: candidateData.isNotEmpty ||
+                            footerCandidateData.isNotEmpty
+                        ? const Align(
+                            alignment: Alignment.topCenter,
+                            child: _DragPlaceholder())
+                        : null);
+              },
+              onWillAccept: (data) {
+                return true;
+              },
+              onAccept: (data) {
+                setState(() {
+                  final indexFrom = blocks.indexOf(data);
+                  blocks.removeAt(indexFrom);
+                  _listViewKey.currentState?.removeItem(
+                      indexFrom, (_, __) => Container(),
+                      duration: Duration.zero);
+
+                  final indexTo = blocks.length;
+                  blocks.insert(indexTo, data);
+                  _listViewKey.currentState?.insertItem(indexTo);
+                });
+              },
+            );
+          }
+
+          final block = blocks[index];
+
           final blockWidget = Material(
             color: Colors.transparent,
             child: Container(
               height: 44,
+              alignment: Alignment.centerLeft,
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
               child: Text(block),
             ),
           );
 
-          return SliverToBoxAdapter(
+          return SizeTransition(
+            sizeFactor: animation,
+            // position: animation.drive(
+            //   Tween(begin: const Offset(1.0, 0.0), end: const Offset(0.0, 0.0)),
+            // ),
             child: DragTarget<String>(
               builder: (context, List<String?> candidateData, rejectedData) {
                 final draggableWidget = LongPressDraggable(
                   data: block,
                   axis: Axis.vertical,
-                  feedback:
-                      Opacity(opacity: 0.3, child: blockWidget),
+                  feedback: Opacity(opacity: 0.5, child: blockWidget),
                   //feedback: blockWidget,
                   // childWhenDragging:
                   //     Opacity(opacity: 0.2, child: blockWidget),
@@ -86,20 +109,12 @@ class _TestDNDState extends State<TestDND> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (index == 0) const SizedBox(height: 16),
                     AnimatedSize(
                       duration: const Duration(milliseconds: 200),
-                      child: SizedBox(
-                        height: candidateData.isNotEmpty ? null : 0,
-                        child: Visibility(
-                            visible: candidateData.isNotEmpty,
-                            child: const Divider(
-                              height: 8,
-                              thickness: 2,
-                              color: Colors.blue,
-                              indent: 16,
-                              endIndent: 16,
-                            )),
-                      ),
+                      child: candidateData.isNotEmpty
+                          ? const _DragPlaceholder()
+                          : const SizedBox.shrink(),
                     ),
                     draggableWidget,
                   ],
@@ -112,68 +127,20 @@ class _TestDNDState extends State<TestDND> {
                 setState(() {
                   final indexFrom = blocks.indexOf(data);
                   blocks.removeAt(indexFrom);
+                  _listViewKey.currentState?.removeItem(
+                      indexFrom, (_, __) => Container(),
+                      duration: Duration.zero);
 
                   final indexTo = indexFrom < index ? index - 1 : index;
                   blocks.insert(indexTo, data);
+                  _listViewKey.currentState?.insertItem(indexTo);
                 });
               },
             ),
           );
-        }),
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 64,
-            child: DragTarget<String>(
-              builder: (context, List<String?> candidateData, rejectedData) {
-                if (candidateData.isNotEmpty) {
-                  return const Align(
-                      alignment: Alignment.topCenter,
-                      child: Divider(thickness: 2, color: Colors.blue));
-                }
-                return const SizedBox.shrink();
-              },
-              onWillAccept: (data) {
-                return true;
-              },
-              onAccept: (data) {
-                setState(() {
-                  final indexFrom = blocks.indexOf(data);
-                  blocks.removeAt(indexFrom);
-
-                  final indexTo = blocks.length;
-                  blocks.insert(indexTo, data);
-                });
-              },
-            ),
-          ),
-        ),
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: DragTarget<String>(
-            builder: (context, List<String?> candidateData, rejectedData) {
-              if (candidateData.isNotEmpty) {
-                return const Align(
-                    alignment: Alignment.topCenter,
-                    child: Divider(thickness: 2, color: Colors.blue));
-              }
-              return const SizedBox.shrink();
-            },
-            onWillAccept: (data) {
-              return true;
-            },
-            onAccept: (data) {
-              setState(() {
-                final indexFrom = blocks.indexOf(data);
-                blocks.removeAt(indexFrom);
-
-                final indexTo = blocks.length;
-                blocks.insert(indexTo, data);
-              });
-            },
-          ),
-        ),
-      ],
-    );
+        },
+      );
+    });
 
     return Scaffold(
         appBar: AppBar(),
@@ -207,10 +174,25 @@ class _TestDNDState extends State<TestDND> {
                     _scrollController.position.maxScrollExtent) {
               final double to = min(_scrollController.offset + moveDistance,
                   _scrollController.position.maxScrollExtent);
-              _scrollController.jumpTo(_scrollController.offset + moveDistance);
+              _scrollController.jumpTo(to);
             }
           },
           child: blocksList,
         ));
+  }
+}
+
+class _DragPlaceholder extends StatelessWidget {
+  const _DragPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Divider(
+      height: 8,
+      thickness: 2,
+      color: Colors.blue,
+      indent: 16,
+      endIndent: 16,
+    );
   }
 }
