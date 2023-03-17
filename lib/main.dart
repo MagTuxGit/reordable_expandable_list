@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'drop_test.dart';
 import 'home_page.dart';
+import 'reordable_simple.dart';
 
 void main() {
   runApp(const MyApp());
