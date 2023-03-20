@@ -1,7 +1,6 @@
 import 'drag_and_drop_builder_parameters.dart';
 import 'drag_and_drop_list_interface.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 typedef OnDropOnLastTarget = void Function(
   DragAndDropListInterface newOrReordered,

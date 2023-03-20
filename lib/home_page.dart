@@ -22,13 +22,11 @@ class InnerList {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  //List<BlockNode> blockNodes = [];
   late List<InnerList> _lists;
 
   @override
   void initState() {
     super.initState();
-    //blockNodes = Data.blockNodes;
 
     _lists = List.generate(4, (outerIndex) {
       return InnerList(
@@ -44,7 +42,6 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: const Text('Reordable Expandable'),
       ),
-      //body: _ReordableListBranch(items, onReorder),
       body: DragAndDropLists(
         children: List.generate(_lists.length, (index) => _buildList(index)),
         onItemReorder: _onItemReorder,

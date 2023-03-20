@@ -10,6 +10,7 @@ class Data {
     BlockNode('Text 0 - gamma', 0),
     BlockNode('Text 0 - delta', 0),
   ];
+
   // static List<BlockNode> blockNodes = [
   //   BlockNode('Text 0 - alpha', 0),
   //   BlockNode('Text 0 - beta', 0),
@@ -28,16 +29,18 @@ class Data {
     final List<EditorItem> items = [];
 
     EditorItem? currentItem;
-    for (var blockNode in blockNodes) {
+    //for (final blockNode in blockNodes) {
+    for (int i = 0; i < blockNodes.length; i++) {
+      final blockNode = blockNodes[i];
       while (currentItem != null && blockNode.listLevel <= currentItem.level) {
         currentItem = currentItem.parent;
       }
-      final item = EditorItem(blockNode, currentItem, []);
+      final item = EditorItem(i, blockNode, currentItem, []);
 
-      items.add(item);
+      //items.add(item);
 
       if (currentItem == null) {
-        //items.add(item);
+        items.add(item);
       } else {
         currentItem.add(item);
       }
@@ -51,15 +54,20 @@ class Data {
 }
 
 class EditorItem {
+  final int blockNodeIndex;
   final BlockNode blockNode;
   final EditorItem? parent;
   final List<EditorItem> children;
 
-  EditorItem(this.blockNode, this.parent, this.children);
+  EditorItem(this.blockNodeIndex, this.blockNode, this.parent, this.children);
 
   int get level => blockNode.listLevel;
 
   bool get isToggle => blockNode.isToggleList;
+
+  bool get expanded => true;
+
+  String get title => blockNode.value;
 
   void add(EditorItem child) {
     children.add(child);

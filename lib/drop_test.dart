@@ -2,7 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'drag_and_drop_list/programmatic_expansion_tile.dart';
 import 'model.dart';
+
+final PageStorageBucket _pageStorageBucket = PageStorageBucket();
 
 class TestDND extends StatefulWidget {
   const TestDND({super.key});
@@ -32,36 +35,33 @@ class _TestDNDState extends State<TestDND> {
 
   @override
   Widget build(BuildContext context) {
-    final blocksList = DragTarget<BlockNode>(
+    final items = Data.items(blockNodes);
+
+    final blocksList = DragTarget<EditorItem>(
       onWillAccept: (data) {
         return true;
       },
       onAccept: (data) {
-        setState(() {
-          final indexFrom = blockNodes.indexOf(data);
-          blockNodes.removeAt(indexFrom);
-
-          final indexTo = blockNodes.length;
-          blockNodes.insert(indexTo, data);
-        });
+        _replaceBlock(data, blockNodes.length);
       },
-      builder: (context, List<BlockNode?> footerCandidateData, rejectedData) {
+      builder: (context, List<EditorItem?> footerCandidateData, rejectedData) {
         return AnimatedList(
           key: _listViewKey,
           controller: _scrollController,
-          initialItemCount: blockNodes.length + 1,
+          initialItemCount: items.length + 1,
           itemBuilder: (context, index, animation) {
-            if (index == blockNodes.length) {
-              return DragTarget<BlockNode>(
+            if (index == items.length) {
+              return DragTarget<EditorItem>(
                 builder:
-                    (context, List<BlockNode?> candidateData, rejectedData) {
+                    (context, List<EditorItem?> candidateData, rejectedData) {
                   return SizedBox(
                       height: 64,
                       child: candidateData.isNotEmpty ||
                               footerCandidateData.isNotEmpty
-                          ? const Align(
+                          ? Container(
                               alignment: Alignment.topCenter,
-                              child: _DragPlaceholder())
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                              child: const _DragPlaceholder(0))
                           : null);
                 },
                 onWillAccept: (data) {
@@ -73,53 +73,13 @@ class _TestDNDState extends State<TestDND> {
               );
             }
 
-            final block = blockNodes[index];
-
-            final blockWidget = _BlockWidget(block);
-
-            final draggableWidget = LongPressDraggable(
-              data: block,
-              axis: Axis.vertical,
-              feedback: Opacity(opacity: 0.5, child: blockWidget),
-              // childWhenDragging:
-              //     Opacity(opacity: 0.2, child: blockWidget),
-              childWhenDragging: const SizedBox.shrink(),
-              onDragStarted: () => _isDragging = true,
-              onDragEnd: (details) => _isDragging = false,
-              onDraggableCanceled: (velocity, offset) =>
-              _isDragging = false,
-              child: blockWidget,
-            );
-
-            return SizeTransition(
-              sizeFactor: animation,
-              child: DragTarget<BlockNode>(
-                builder:
-                    (context, List<BlockNode?> candidateData, rejectedData) {
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (index == 0) const SizedBox(height: 16),
-                        AnimatedSize(
-                          duration: const Duration(milliseconds: 200),
-                          child: candidateData.isNotEmpty
-                              ? const _DragPlaceholder()
-                              : const SizedBox.shrink(),
-                        ),
-                        draggableWidget,
-                      ],
-                    ),
-                  );
-                },
-                onWillAccept: (data) {
-                  return true;
-                },
-                onAccept: (data) {
-                  _replaceBlock(data, index);
-                },
-              ),
+            return _ToggleListItem(
+              items[index],
+              //index: index,
+              animation: animation,
+              onDragStart: () => _isDragging = true,
+              onDragEnd: () => _isDragging = false,
+              onReplaceBlock: _replaceBlock,
             );
           },
         );
@@ -134,16 +94,28 @@ class _TestDNDState extends State<TestDND> {
         ));
   }
 
-  void _replaceBlock(BlockNode data, int index) {
+  void _replaceBlock(EditorItem data, int blockIndex) {
     setState(() {
-      final indexFrom = blockNodes.indexOf(data);
+      final indexFrom = data.blockNodeIndex;
       blockNodes.removeAt(indexFrom);
-      _listViewKey.currentState?.removeItem(indexFrom, (_, __) => Container(),
-          duration: Duration.zero);
+      for (final _ in data.children) {
+        blockNodes.removeAt(indexFrom);
+      }
 
-      final indexTo = indexFrom < index ? index - 1 : index;
-      blockNodes.insert(indexTo, data);
-      _listViewKey.currentState?.insertItem(indexTo);
+      // _listViewKey.currentState?.removeItem(indexFrom, (_, __) => Container(),
+      //     duration: Duration.zero);
+
+      int blockIndexTo = indexFrom < blockIndex
+          ? blockIndex - (data.children.length + 1)
+          : blockIndex;
+      blockNodes.insert(blockIndexTo, data.blockNode);
+      for (final child in data.children) {
+        blockIndexTo++;
+        blockNodes.insert(blockIndexTo, child.blockNode);
+      }
+
+      //_listViewKey.currentState?.insertItem(itemIndexTo);
+      //TODO: fix replace
     });
   }
 
@@ -181,16 +153,18 @@ class _TestDNDState extends State<TestDND> {
 }
 
 class _DragPlaceholder extends StatelessWidget {
-  const _DragPlaceholder();
+  final int level;
+
+  const _DragPlaceholder(this.level);
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(
+    return Divider(
       height: 8,
       thickness: 2,
       color: Colors.blue,
-      indent: 16,
-      endIndent: 16,
+      indent: level * 24,
+      // endIndent: 16,
     );
   }
 }
@@ -202,22 +176,123 @@ class _BlockWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: Padding(
-        padding: EdgeInsets.only(left: blockNode.listLevel * 24),
-        child: Row(
-          children: [
-            if (blockNode.isToggleList)
-              const Icon(Icons.arrow_drop_down),
-            Container(
-              height: 44,
-              alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
-              child: Text(blockNode.value),
+    return Padding(
+      padding: EdgeInsets.only(left: blockNode.listLevel * 24),
+      child: Container(
+        height: 44,
+        width: 300,
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
+        child: Text(blockNode.value),
+      ),
+    );
+  }
+}
+
+class _ToggleListItem extends StatelessWidget {
+  final EditorItem item;
+  final Function() onDragStart;
+  final Function() onDragEnd;
+  final Animation<double> animation;
+  final Function(EditorItem, int) onReplaceBlock;
+
+  const _ToggleListItem(this.item,
+      {required this.animation,
+      required this.onReplaceBlock,
+      required this.onDragStart,
+      required this.onDragEnd});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget blockWidget = _BlockWidget(item.blockNode);
+
+    if (item.isToggle) {
+      blockWidget = ProgrammaticExpansionTile(
+        title: Text(item.title),
+        listKey: ValueKey(item.blockNodeIndex),
+        //subtitle: subtitle,
+        trailing: const SizedBox.shrink(),
+        leading: const Icon(Icons.arrow_drop_down),
+        disableTopAndBottomBorders: true,
+        //backgroundColor: backgroundColor,
+        initiallyExpanded: item.expanded,
+        //onExpansionChanged: _onSetExpansion,
+        key: ValueKey(item.blockNodeIndex),
+        contentPadding: const EdgeInsets.all(0),
+        children: item.children.map((child) {
+          return _ToggleListItem(child,
+              animation: animation,
+              onReplaceBlock: onReplaceBlock,
+              onDragStart: onDragStart,
+              onDragEnd: onDragEnd);
+        }).toList(),
+      );
+
+      // blockWidget = ExpansionTile(
+      //   initiallyExpanded: item.expanded,
+      //   leading: const Icon(Icons.arrow_drop_down),
+      //   trailing: const SizedBox.shrink(),
+      //     tilePadding: const EdgeInsets.all(0),
+      //   title: Text(item.title),
+      //   children: item.children.map((child) {
+      //     return _ToggleListItem(child,
+      //         animation: animation,
+      //         onReplaceBlock: onReplaceBlock,
+      //         onDragStart: onDragStart,
+      //         onDragEnd: onDragEnd);
+      //   }).toList(),
+      // );
+    }
+
+    blockWidget = PageStorage(
+      bucket: _pageStorageBucket,
+      child: Material(child: blockWidget),
+    );
+
+    final draggableWidget = LongPressDraggable(
+      data: item,
+      feedback: Opacity(
+          opacity: 0.5,
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            child: blockWidget,
+          )),
+      // childWhenDragging:
+      //     Opacity(opacity: 0.2, child: blockWidget),
+      childWhenDragging: const SizedBox.shrink(),
+      onDragStarted: onDragStart,
+      onDragEnd: (details) => onDragEnd(),
+      onDraggableCanceled: (velocity, offset) => onDragEnd(),
+      child: blockWidget,
+    );
+
+    return SizeTransition(
+      sizeFactor: animation,
+      child: DragTarget<EditorItem>(
+        builder: (context, List<EditorItem?> candidateData, rejectedData) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (item.blockNodeIndex == 0) const SizedBox(height: 16),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 200),
+                  child: candidateData.isNotEmpty
+                      ? _DragPlaceholder(item.blockNode.listLevel)
+                      : const SizedBox.shrink(),
+                ),
+                draggableWidget,
+              ],
             ),
-          ],
-        ),
+          );
+        },
+        onWillAccept: (data) {
+          return true;
+        },
+        onAccept: (data) {
+          onReplaceBlock(data, item.blockNodeIndex);
+        },
       ),
     );
   }
