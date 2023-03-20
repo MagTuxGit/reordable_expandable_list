@@ -7,13 +7,22 @@ class Data {
     BlockNode('Toggle 0 - alpha', 0, isToggleList: true),
     BlockNode('Subtext 1 - alpha', 1),
     BlockNode('Subtext 1 - beta', 1),
-    BlockNode('Subtoggle 1 - alpha', 1, isToggleList: true),
-    BlockNode('Subtext 2 - alpha', 2),
-    BlockNode('Subtext 2 - beta', 2),
-    BlockNode('Subtoggle 1 - beta', 1, isToggleList: true),
-    BlockNode('Subtext 2 - alpha', 2),
-    BlockNode('Subtext 2 - beta', 2),
+    BlockNode('Text 0 - gamma', 0),
+    BlockNode('Text 0 - delta', 0),
   ];
+  // static List<BlockNode> blockNodes = [
+  //   BlockNode('Text 0 - alpha', 0),
+  //   BlockNode('Text 0 - beta', 0),
+  //   BlockNode('Toggle 0 - alpha', 0, isToggleList: true),
+  //   BlockNode('Subtext 1 - alpha', 1),
+  //   BlockNode('Subtext 1 - beta', 1),
+  //   BlockNode('Subtoggle 1 - alpha', 1, isToggleList: true),
+  //   BlockNode('Subtext 2 - alpha', 2),
+  //   BlockNode('Subtext 2 - beta', 2),
+  //   BlockNode('Subtoggle 1 - beta', 1, isToggleList: true),
+  //   BlockNode('Subtext 2 - alpha', 2),
+  //   BlockNode('Subtext 2 - beta', 2),
+  // ];
 
   static List<EditorItem> items(List<BlockNode> blockNodes) {
     final List<EditorItem> items = [];
@@ -65,4 +74,12 @@ class BlockNode {
 
   BlockNode(this.value, this.listLevel, {this.isToggleList = false})
       : id = ItemIdUtils.newEntityId();
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BlockNode && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
