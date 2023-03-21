@@ -39,30 +39,6 @@ class Data {
     BlockNode(value: 'Subtext 2 - alpha', listLevel: 2),
     BlockNode(value: 'Subtext 2 - beta', listLevel: 2),
   ];
-
-  static List<EditorItem> items(List<BlockNode> blockNodes) {
-    final List<EditorItem> items = [];
-
-    EditorItem? currentItem;
-    for (int i = 0; i < blockNodes.length; i++) {
-      final blockNode = blockNodes[i];
-      while (currentItem != null && blockNode.listLevel <= currentItem.level) {
-        currentItem = currentItem.parent;
-      }
-      final item = EditorItem(i, blockNode, currentItem, []);
-
-      if (currentItem == null) {
-        items.add(item);
-      } else {
-        currentItem.add(item);
-      }
-      if (blockNode.isToggleList) {
-        currentItem = item;
-      }
-    }
-
-    return items;
-  }
 }
 
 class EditorItem {
