@@ -45,11 +45,13 @@ class _TestDNDState extends State<TestDND> {
         _replaceBlock(data, blockNodes.length);
       },
       builder: (context, List<EditorItem?> footerCandidateData, rejectedData) {
-        return AnimatedList(
+        return ListView.builder(
           key: _listViewKey,
           controller: _scrollController,
-          initialItemCount: items.length + 1,
-          itemBuilder: (context, index, animation) {
+          //initialItemCount: items.length + 1,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          itemCount: items.length + 1,
+          itemBuilder: (context, index) {
             if (index == items.length) {
               return DragTarget<EditorItem>(
                 builder:
@@ -76,7 +78,7 @@ class _TestDNDState extends State<TestDND> {
             return _ToggleListItem(
               items[index],
               //index: index,
-              animation: animation,
+              //animation: animation,
               onDragStart: () => _isDragging = true,
               onDragEnd: () => _isDragging = false,
               onReplaceBlock: _replaceBlock,
@@ -95,8 +97,27 @@ class _TestDNDState extends State<TestDND> {
   }
 
   void _replaceBlock(EditorItem data, int blockIndex) {
+    final indexFrom = data.blockNodeIndex;
+
+    int blockIndexTo = indexFrom < blockIndex
+        ? blockIndex - (data.children.length + 1)
+        : blockIndex;
+
+    if (indexFrom == blockIndexTo) {
+      return;
+    }
+
+    int levelsToAdd = 0;
+    if (blockIndexTo == 0) {
+      levelsToAdd = -data.blockNode.listLevel;
+    } else {
+      final prevBlock = blockNodes[blockIndex - 1];
+      levelsToAdd = prevBlock.listLevel +
+          (prevBlock.isToggleList ? 1 : 0) -
+          data.blockNode.listLevel;
+    }
+
     setState(() {
-      final indexFrom = data.blockNodeIndex;
       blockNodes.removeAt(indexFrom);
       for (final _ in data.children) {
         blockNodes.removeAt(indexFrom);
@@ -105,13 +126,10 @@ class _TestDNDState extends State<TestDND> {
       // _listViewKey.currentState?.removeItem(indexFrom, (_, __) => Container(),
       //     duration: Duration.zero);
 
-      int blockIndexTo = indexFrom < blockIndex
-          ? blockIndex - (data.children.length + 1)
-          : blockIndex;
-      blockNodes.insert(blockIndexTo, data.blockNode);
+      blockNodes.insert(blockIndexTo, data.blockNode.changeIndex(levelsToAdd));
       for (final child in data.children) {
         blockIndexTo++;
-        blockNodes.insert(blockIndexTo, child.blockNode);
+        blockNodes.insert(blockIndexTo, child.blockNode.changeIndex(levelsToAdd));
       }
 
       //_listViewKey.currentState?.insertItem(itemIndexTo);
@@ -176,15 +194,12 @@ class _BlockWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(left: blockNode.listLevel * 24),
-      child: Container(
-        height: 44,
-        width: 300,
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
-        child: Text(blockNode.value),
-      ),
+    return Container(
+      height: 44,
+      width: 300,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
+      child: Text(blockNode.value),
     );
   }
 }
@@ -193,11 +208,11 @@ class _ToggleListItem extends StatelessWidget {
   final EditorItem item;
   final Function() onDragStart;
   final Function() onDragEnd;
-  final Animation<double> animation;
+  final Animation<double>? animation;
   final Function(EditorItem, int) onReplaceBlock;
 
   const _ToggleListItem(this.item,
-      {required this.animation,
+      {this.animation,
       required this.onReplaceBlock,
       required this.onDragStart,
       required this.onDragEnd});
@@ -246,7 +261,10 @@ class _ToggleListItem extends StatelessWidget {
 
     blockWidget = PageStorage(
       bucket: _pageStorageBucket,
-      child: Material(child: blockWidget),
+      child: Material(child: Padding(
+        padding: EdgeInsets.only(left: item.level * 24),
+        child: blockWidget,
+      )),
     );
 
     final draggableWidget = LongPressDraggable(
@@ -267,24 +285,21 @@ class _ToggleListItem extends StatelessWidget {
     );
 
     return SizeTransition(
-      sizeFactor: animation,
+      sizeFactor: animation ?? const AlwaysStoppedAnimation<double>(1),
       child: DragTarget<EditorItem>(
         builder: (context, List<EditorItem?> candidateData, rejectedData) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (item.blockNodeIndex == 0) const SizedBox(height: 16),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
-                  child: candidateData.isNotEmpty
-                      ? _DragPlaceholder(item.blockNode.listLevel)
-                      : const SizedBox.shrink(),
-                ),
-                draggableWidget,
-              ],
-            ),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (item.blockNodeIndex == 0) const SizedBox(height: 16),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                child: candidateData.isNotEmpty
+                    ? _DragPlaceholder(item.blockNode.listLevel)
+                    : const SizedBox.shrink(),
+              ),
+              draggableWidget,
+            ],
           );
         },
         onWillAccept: (data) {

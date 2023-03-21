@@ -1,43 +1,55 @@
+import 'dart:math';
+
 import 'id_utils.dart';
 
 class Data {
-  static List<BlockNode> blockNodes = [
-    BlockNode('Text 0 - alpha', 0),
-    BlockNode('Text 0 - beta', 0),
-    BlockNode('Toggle 0 - alpha', 0, isToggleList: true),
-    BlockNode('Subtext 1 - alpha', 1),
-    BlockNode('Subtext 1 - beta', 1),
-    BlockNode('Text 0 - gamma', 0),
-    BlockNode('Text 0 - delta', 0),
-  ];
+  // static List<BlockNode> blockNodes = [
+  //   BlockNode(value: 'Text 0 - alpha', listLevel: 0),
+  //   BlockNode(value: 'Text 0 - beta', listLevel: 0),
+  //   BlockNode(value: 'Toggle 0 - alpha', listLevel: 0, isToggleList: true),
+  //   BlockNode(value: 'Subtext 1 - alpha', listLevel: 1),
+  //   BlockNode(value: 'Subtext 1 - beta', listLevel: 1),
+  //   BlockNode(value: 'Text 0 - gamma', listLevel: 0),
+  //   BlockNode(value: 'Text 0 - delta', listLevel: 0),
+  // ];
 
   // static List<BlockNode> blockNodes = [
-  //   BlockNode('Text 0 - alpha', 0),
-  //   BlockNode('Text 0 - beta', 0),
-  //   BlockNode('Toggle 0 - alpha', 0, isToggleList: true),
-  //   BlockNode('Subtext 1 - alpha', 1),
-  //   BlockNode('Subtext 1 - beta', 1),
-  //   BlockNode('Subtoggle 1 - alpha', 1, isToggleList: true),
-  //   BlockNode('Subtext 2 - alpha', 2),
-  //   BlockNode('Subtext 2 - beta', 2),
-  //   BlockNode('Subtoggle 1 - beta', 1, isToggleList: true),
-  //   BlockNode('Subtext 2 - alpha', 2),
-  //   BlockNode('Subtext 2 - beta', 2),
+  //   BlockNode(value: 'Text 0 - alpha', listLevel: 0),
+  //   BlockNode(value: 'Text 0 - beta', listLevel: 0),
+  //   BlockNode(value: 'Toggle 0 - alpha', listLevel: 0, isToggleList: true),
+  //   BlockNode(value: 'Subtext 1 - alpha', listLevel: 1),
+  //   BlockNode(value: 'Subtext 1 - beta', listLevel: 1),
+  //   BlockNode(value: 'Subtoggle 1 - alpha', listLevel: 1, isToggleList: true),
+  //   BlockNode(value: 'Subtext 2 - alpha', listLevel: 2),
+  //   BlockNode(value: 'Subtext 2 - beta', listLevel: 2),
+  //   BlockNode(value: 'Subtoggle 1 - beta', listLevel: 1, isToggleList: true),
+  //   BlockNode(value: 'Subtext 2 - alpha', listLevel: 2),
+  //   BlockNode(value: 'Subtext 2 - beta', listLevel: 2),
   // ];
+
+  static List<BlockNode> blockNodes = [
+    BlockNode(value: 'Text 0 - alpha', listLevel: 0),
+    BlockNode(value: 'Text 0 - beta', listLevel: 0),
+    BlockNode(value: 'Toggle 0 - alpha', listLevel: 0, isToggleList: true),
+    BlockNode(value: 'Subtext 1', listLevel: 1),
+    BlockNode(value: 'Subtext 2', listLevel: 2),
+    BlockNode(value: 'Subtext 3', listLevel: 3),
+    BlockNode(value: 'Subtext 4', listLevel: 4),
+    BlockNode(value: 'Subtoggle 1 - beta', listLevel: 1, isToggleList: true),
+    BlockNode(value: 'Subtext 2 - alpha', listLevel: 2),
+    BlockNode(value: 'Subtext 2 - beta', listLevel: 2),
+  ];
 
   static List<EditorItem> items(List<BlockNode> blockNodes) {
     final List<EditorItem> items = [];
 
     EditorItem? currentItem;
-    //for (final blockNode in blockNodes) {
     for (int i = 0; i < blockNodes.length; i++) {
       final blockNode = blockNodes[i];
       while (currentItem != null && blockNode.listLevel <= currentItem.level) {
         currentItem = currentItem.parent;
       }
       final item = EditorItem(i, blockNode, currentItem, []);
-
-      //items.add(item);
 
       if (currentItem == null) {
         items.add(item);
@@ -58,10 +70,15 @@ class EditorItem {
   final BlockNode blockNode;
   final EditorItem? parent;
   final List<EditorItem> children;
+  late final int level;
 
-  EditorItem(this.blockNodeIndex, this.blockNode, this.parent, this.children);
-
-  int get level => blockNode.listLevel;
+  EditorItem(this.blockNodeIndex, this.blockNode, this.parent, this.children) {
+    if (parent == null) {
+      level = blockNode.listLevel;
+    } else {
+      level = blockNode.listLevel - parent!.level;
+    }
+  }
 
   bool get isToggle => blockNode.isToggleList;
 
@@ -80,8 +97,16 @@ class BlockNode {
   final bool isToggleList;
   final int listLevel;
 
-  BlockNode(this.value, this.listLevel, {this.isToggleList = false})
-      : id = ItemIdUtils.newEntityId();
+  BlockNode({String? id, required this.value, required this.listLevel, this.isToggleList = false})
+      : id = id ?? ItemIdUtils.newEntityId();
+
+  BlockNode changeIndex(int levelsToAdd) =>
+      BlockNode(
+        id: id,
+        value: value,
+        listLevel: max(0, min(7, listLevel + levelsToAdd)),
+        isToggleList: isToggleList,
+      );
 
   @override
   bool operator ==(Object other) =>
